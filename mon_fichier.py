@@ -2,6 +2,14 @@
 import streamlit as st
 import requests
 import pandas as pd
+import plotly.graph_objects as go
+from sklearn.linear_model import LinearRegression
+import numpy as np
+from sklearn.cluster import KMeans
+from sklearn.preprocessing import StandardScaler
+from sklearn.decomposition import PCA
+
+
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 # Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
 def get_indicators():
@@ -39,7 +47,7 @@ def convert_to_dataframe(data):
     return pd.DataFrame(records)
     
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Machine Learning", "À propos ℹ️"])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Machine Learning 📈📉", "À propos ℹ️"])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -124,10 +132,9 @@ elif page == "Analyse des données ⛑️📊 ":
             else:
                 st.write("Aucune donnée trouvée pour cet indicateur.")
 #Machine Learning
-elif page == "Machine Learning":
-    st.title("Machine Learning")
-    st.write("Bienvenue sur la page Machine Learning")
-    st.write("Cette page est dédiée à l'analyse des données de santé publique à l'aide de modèles de Machine Learning.")
+elif page == "Machine Learning 📈📉":
+    st.title("Machine Learning 📈📉")
+
      # Récupérer les indicateurs et les afficher dans une liste déroulante
     indicators = get_indicators()
     if indicators:
@@ -137,7 +144,7 @@ elif page == "Machine Learning":
         st.write("Vous avez choisi l'indicateur :", indicator_name)
 
         # Bouton pour analyser les données
-        if st.toggle("Modèle Linéaire"):
+        if st.toggle("Analyses ML"):
             data = get_who_data(indicator_id)
             if data:
                 st.write("Données brutes :")
@@ -157,8 +164,7 @@ elif page == "Machine Learning":
                     data = df.groupby('Year').sum()
                     data = data.reset_index()
                     data = data[['Year','Value']]
-                    from sklearn.linear_model import LinearRegression
-                    import numpy as np
+                    
 
                     linear_model = LinearRegression()
                     linear_model.fit(data[['Year']], data['Value'])
@@ -170,7 +176,6 @@ elif page == "Machine Learning":
                     st.write(f'#### Intercept : {linear_model.intercept_}')
                     st.write(f'#### Score R2 : {score}')
 
-                    import plotly.graph_objects as go
 
                     # Préparation des prédictions
                     years_future = np.array([[2020], [2021], [2022], [2023], [2024], [2025]])
@@ -201,10 +206,47 @@ elif page == "Machine Learning":
                     st.write("Visualisation des données, de la régression linéaire et des prédictions futures.")
                     st.plotly_chart(fig, use_container_width=True)
 
-                else:
-                    st.write("Aucune donnée trouvée pour cet indicateur.ERRRROR")
-            else:
-                st.write("Aucune donnée trouvée pour cet indicateur.")
+            if st.toggle('Voir le Clustering :'): 
+                st.title('Clustering')
+                # Préparation des données
+                scaler = StandardScaler()
+                data2 = df.groupby('Country').sum()
+                data2 = data2.reset_index()
+
+                # Normalisation des valeurs
+                data_scaled = scaler.fit_transform(data2[['Value']])
+
+                # Clustering avec KMeans
+                kmeans = KMeans(n_clusters=3, random_state=42)
+                kmeans.fit(data_scaled)
+                data2['Cluster'] = kmeans.labels_
+
+                # Création de la figure Plotly
+                fig = go.Figure()
+                for cluster in data2['Cluster'].unique():
+                    cluster_data = data2[data2['Cluster'] == cluster]
+                    fig.add_trace(go.Scatter(
+                        x=cluster_data['Country'],  # Nom des pays en axe x
+                        y=cluster_data['Value'],    # Valeurs originales en axe y
+                        mode='markers', 
+                        name=f'Cluster {cluster}',
+                        hovertext=cluster_data['Country'],  # Nom du pays pour le survol
+                        hoverinfo="text"  # Affiche uniquement le nom du pays au survol
+                    ))
+
+                # Mise en forme de la figure
+                fig.update_layout(
+                    title="Clustering des données par pays",
+                    xaxis_title="Pays",
+                    yaxis_title="Valeur",
+                    template="plotly_white"
+                )
+
+                # Affichage du graphique dans Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+
+        else:
+            st.write("Aucune donnée trouvée pour cet indicateur.")
 #A propos 
 elif page == "À propos ℹ️":
     st.title("À propos ℹ️")
