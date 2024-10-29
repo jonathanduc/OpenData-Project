@@ -2,7 +2,7 @@
 import streamlit as st
 import requests
 import pandas as pd
-
+st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="collapsed")
 # Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
 def get_indicators():
         url = "https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'Health')"
@@ -43,13 +43,14 @@ page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse 
 
 # Page d'accueil
 if page == "Accueil 🏠":
+    data = 'https://www.lemonde.fr/sante/video/2017/05/24/a-quoi-sert-l-organisation-mondiale-de-la-sante_5133494_1651302.html?dmplayersource=share-send'
     st.title("Accueil 🏠")
     st.title('Analyse des données de santé publique - API de l’OMS')
     st.write("Bienvenue sur l'application d'analyse de données de santé publique !")
     st.write("Cet outil récupère et affiche les données de santé publique de l'OMS.")
     st.image('https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_de_l%27Organisation_mondiale_de_la_santé.svg')
     st.image('https://portal-cdn.scnat.ch/asset/6fa448d9-8935-5622-aabf-a38072964841/2Personalisierte_Gesundheit.png?b=25632ea7-3d85-5198-a1f0-4ad8c9dcd6ac&v=df8f0af8-c032-5691-983d-84399f3dabd8_100&s=BemJi1u43IKhuBMmsD2ab6cA6zawwM6Nr_qD3i5tf6Aj4U4VLzDFpXxq4CBe-B-5Cfj0mHLCg1S89lSrv0ZhXRFcUUkGUGXlPIQrJePIWBtf3kwOZ1sHagPcP8_VmpKU8SOWNLpIKLcQUJrG66a27HSo7itvX6f0pdatcpVpnjc&t=fc13185f-cc70-4eb1-86f2-ea80914407bc&sc=2')
-
+    st.video(data, format="video/mp4", start_time=0, end_time=None, loop=False, autoplay=False, muted=False)
 # Analyse des données
 elif page == "Analyse des données ⛑️📊 ":
     st.title("Analyse des données de santé publique ⛑️📊")
@@ -116,7 +117,44 @@ elif page == "Machine Learning":
     st.write("Nous allons commencer par prétraiter les données avant de les utiliser pour entraîner un modèle de Machine Learning.")
     st.write("### Traitement des valeurs manquantes")
     st.write("Nous allons remplacer les valeurs manquantes par la moyenne de chaque colonne.")
+     # Récupérer les indicateurs et les afficher dans une liste déroulante
+    indicators = get_indicators()
+    if indicators:
+        indicator_name = st.selectbox('Sélectionnez un indicateur', list(indicators.keys()))
+        indicator_id = indicators[indicator_name]
+        
+        st.write("Vous avez choisi l'indicateur :", indicator_name)
 
+        # Bouton pour analyser les données
+        if st.toggle("Analyser les données"):
+            data = get_who_data(indicator_id)
+            if data:
+                st.write("Données brutes :")
+                df = convert_to_dataframe(data)
+
+                # Traitement de la colonne Year en format numérique et des valeurs 'No d'
+                df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
+                df['Value'] = df['Value'].replace('No d', 0).astype(float)
+
+                # Affichage des données brutes et analyses descriptives
+                with st.expander("Voir les données brutes"):
+                    st.dataframe(df, use_container_width=True)
+
+                if st.toggle('Voir la régression linéaire'):
+
+                    # Préparation des données pour le graphique par année
+                    group = country_df.groupby('Year').sum('Value').reset_index()
+                    st.write(f"Graphique de l'évolution de {indicator_name} par année pour {select_country}")
+
+                    # Affichage du graphique sélectionné
+                    if select_graph == 'Bar':
+                        st.bar_chart(data=group, x='Year', y='Value')
+                    elif select_graph == 'Line':
+                        st.line_chart(data=group, x='Year', y='Value')
+                else:
+                    st.write("Aucune donnée trouvée pour cet indicateur.ERRRROR")
+            else:
+                st.write("Aucune donnée trouvée pour cet indicateur.")
 #A propos 
 elif page == "À propos ℹ️":
     st.title("À propos ℹ️")
