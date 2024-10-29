@@ -4,17 +4,19 @@ import requests
 import pandas as pd
 
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données 📊 ", "À propos ℹ️"])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Machine Learning", "À propos ℹ️"])
 
+# Page d'accueil
 if page == "Accueil 🏠":
-    st.title("Accueil")
-    st.write("Bienvenue sur l'application d'analyse de données de santé publique !")
-    st.image('https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_de_l%27Organisation_mondiale_de_la_santé.svg')
+    st.title("Accueil 🏠")
     st.title('Analyse des données de santé publique - API de l’OMS')
+    st.write("Bienvenue sur l'application d'analyse de données de santé publique !")
     st.write("Cet outil récupère et affiche les données de santé publique de l'OMS.")
+    st.image('https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_de_l%27Organisation_mondiale_de_la_santé.svg')
 
-elif page == "Analyse des données 📊 ":
-    st.title("Analyse des données de santé publique")
+# Analyse des données
+elif page == "Analyse des données ⛑️📊 ":
+    st.title("Analyse des données de santé publique ⛑️📊")
     # Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
     def get_indicators():
         url = "https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'Health')"
@@ -104,12 +106,31 @@ elif page == "Analyse des données 📊 ":
                     st.write("Aucune donnée trouvée pour cet indicateur.ERRRROR")
             else:
                 st.write("Aucune donnée trouvée pour cet indicateur.")
+#Machine Learning
+elif page == "Machine Learning":
+    st.title("Machine Learning")
+    st.write("Bienvenue sur la page Machine Learning")
+    st.write("Cette page est dédiée à l'analyse des données de santé publique à l'aide de modèles de Machine Learning.")
+    st.write("## Prétraitement des données")
+    st.write("Nous allons commencer par prétraiter les données avant de les utiliser pour entraîner un modèle de Machine Learning.")
+    st.write("### Traitement des valeurs manquantes")
+    st.write("Nous allons remplacer les valeurs manquantes par la moyenne de chaque colonne.")
 
+#A propos 
 elif page == "À propos ℹ️":
-    st.title("À propos")
+    st.title("À propos ℹ️")
     st.write("Cet outil a été créé dans le cadre du cours d'Open data et Web des données.")
     st.page_link("https://github.com/jonathanduc/OpenData-Project", label = "Lien vers le projet sur GitHub", icon= "🔗")
-    st.write("Auteur : Jonathan Duckes et Girondin Audric")
+    st.page_link("https://www.who.int/data/gho", label = "Lien vers l'API de l'OMS", icon= "🔗")
+    st.write("## À propos des développeurs")
+
+# Ajout des liens GitHub en utilisant Markdown
+    st.markdown(
+        """
+        **[🔗 Jonathan Duckes](https://github.com/jonathanduc)**  
+        **[🔗 Girondin Audric](https://github.com/aaudric)**
+        """
+    )
     texte = """ Nous sommes deux étudiants en Master 2 et avons entrepris ce projet dans le cadre de notre formation afin de renforcer nos compétences en développement d’applications et de visualisation de données. L'objectif de ce projet est de concevoir un dashboard interactif en utilisant Streamlit, une bibliothèque Python spécialisée dans la création d'interfaces web.
 
 Le dashboard vise à fournir une visualisation claire et interactive des données sur un sujet spécifique, avec des indicateurs clés, des graphiques et une interactivité grâce à des widgets intégrés. Pour garantir des données à jour et pertinentes, nous utilisons une API pour récupérer dynamiquement le dataset nécessaire.
@@ -123,6 +144,3 @@ Notre travail est structuré autour de plusieurs éléments essentiels :
 Ce projet est une opportunité pour nous de mettre en pratique les compétences acquises en data science et en développement, tout en créant un outil utile et fonctionnel pour une meilleure compréhension des données.
 """
     st.write(texte)
-
-
-
