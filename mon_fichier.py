@@ -3,6 +3,41 @@ import streamlit as st
 import requests
 import pandas as pd
 
+# Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
+def get_indicators():
+        url = "https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'Health')"
+        response = requests.get(url)
+        if response.status_code == 200:
+            data = response.json()['value']
+            indicators = {item['IndicatorName']: item['IndicatorCode'] for item in data}
+            return indicators
+        else:
+            st.error("Erreur lors de la récupération des indicateurs.")
+            return None
+
+# Fonction pour récupérer les données de l'API de l'OMS pour un indicateur spécifique
+def get_who_data(indicator_id):
+    base_url = "https://ghoapi.azureedge.net/api/"
+    url = f"{base_url}{indicator_id}"
+    response = requests.get(url)
+    if response.status_code == 200:
+        data = response.json()
+        return data['value']  # Les données sont dans la clé 'value'
+    else:
+        st.error("Erreur lors de la récupération des données.")
+        return None
+# Fonction pour convertir les données en DataFrame
+def convert_to_dataframe(data):
+    records = []
+    for entry in data:
+        record = {
+                'Country': entry.get('SpatialDim', 'N/A'),
+                'Year': entry.get('TimeDim', 'null'),
+                'Value': entry.get('Value', 'N/A')
+            }
+        records.append(record)
+    return pd.DataFrame(records)
+    
 # Options de navigation
 page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Machine Learning", "À propos ℹ️"])
 
@@ -18,41 +53,6 @@ if page == "Accueil 🏠":
 # Analyse des données
 elif page == "Analyse des données ⛑️📊 ":
     st.title("Analyse des données de santé publique ⛑️📊")
-    # Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
-    def get_indicators():
-        url = "https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'Health')"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()['value']
-            indicators = {item['IndicatorName']: item['IndicatorCode'] for item in data}
-            return indicators
-        else:
-            st.error("Erreur lors de la récupération des indicateurs.")
-            return None
-
-    # Fonction pour récupérer les données de l'API de l'OMS pour un indicateur spécifique
-    def get_who_data(indicator_id):
-        base_url = "https://ghoapi.azureedge.net/api/"
-        url = f"{base_url}{indicator_id}"
-        response = requests.get(url)
-        if response.status_code == 200:
-            data = response.json()
-            return data['value']  # Les données sont dans la clé 'value'
-        else:
-            st.error("Erreur lors de la récupération des données.")
-            return None
-
-    # Fonction pour convertir les données en DataFrame
-    def convert_to_dataframe(data):
-        records = []
-        for entry in data:
-            record = {
-                'Country': entry.get('SpatialDim', 'N/A'),
-                'Year': entry.get('TimeDim', 'null'),
-                'Value': entry.get('Value', 'N/A')
-            }
-            records.append(record)
-        return pd.DataFrame(records)
 
     # Récupérer les indicateurs et les afficher dans une liste déroulante
     indicators = get_indicators()
