@@ -13,6 +13,7 @@ if page == "Accueil 🏠":
     st.write("Bienvenue sur l'application d'analyse de données de santé publique !")
     st.write("Cet outil récupère et affiche les données de santé publique de l'OMS.")
     st.image('https://upload.wikimedia.org/wikipedia/commons/3/3a/Logo_de_l%27Organisation_mondiale_de_la_santé.svg')
+    st.image('https://portal-cdn.scnat.ch/asset/6fa448d9-8935-5622-aabf-a38072964841/2Personalisierte_Gesundheit.png?b=25632ea7-3d85-5198-a1f0-4ad8c9dcd6ac&v=df8f0af8-c032-5691-983d-84399f3dabd8_100&s=BemJi1u43IKhuBMmsD2ab6cA6zawwM6Nr_qD3i5tf6Aj4U4VLzDFpXxq4CBe-B-5Cfj0mHLCg1S89lSrv0ZhXRFcUUkGUGXlPIQrJePIWBtf3kwOZ1sHagPcP8_VmpKU8SOWNLpIKLcQUJrG66a27HSo7itvX6f0pdatcpVpnjc&t=fc13185f-cc70-4eb1-86f2-ea80914407bc&sc=2')
 
 # Analyse des données
 elif page == "Analyse des données ⛑️📊 ":
@@ -122,6 +123,7 @@ elif page == "À propos ℹ️":
     st.write("Cet outil a été créé dans le cadre du cours d'Open data et Web des données.")
     st.page_link("https://github.com/jonathanduc/OpenData-Project", label = "Lien vers le projet sur GitHub", icon= "🔗")
     st.page_link("https://www.who.int/data/gho", label = "Lien vers l'API de l'OMS", icon= "🔗")
+    st.page_link('https://docs.streamlit.io', label='Lien vers la documentation de Streamlit', icon='🔗')
     st.write("## À propos des développeurs")
 
 # Ajout des liens GitHub en utilisant Markdown
