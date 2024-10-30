@@ -223,7 +223,7 @@ elif page == "Machine Learning 📈📉":
                     col3.metric('#### Score R2', score)
                    
 
-                if st.toggle('Voir le Clustering :'): 
+                if st.toggle('Voir le Clustering :', ): 
 
                     st.title('Clustering')
 
@@ -260,8 +260,8 @@ elif page == "Machine Learning 📈📉":
                     # Créez la figure de la méthode du coude
                     fig, ax = plt.subplots(figsize=(10, 6))
                     ax.plot(cluster_range, inertia, marker='o', linestyle='-')
-                    ax.set_xlabel("Nombre de clusters")
-                    ax.set_ylabel("Inertie (somme des distances au carré)")
+                    ax.set_xlabel("Nombre de clusters", fontsize=16)
+                    ax.set_ylabel("Inertie (somme des distances au carré)", fontsize=16)
                     ax.set_title("Méthode du coude pour le choix du nombre de clusters", fontsize=20, loc='center')
                     ax.grid(True)
 
