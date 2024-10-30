@@ -171,14 +171,9 @@ elif page == "Machine Learning 📈📉":
 
                     linear_model = LinearRegression()
                     linear_model.fit(data[['Year']], data['Value'])
-                    score = linear_model.score(data[['Year']], data['Value'])
-                    coeff = linear_model.coef_
-                    intercept = linear_model.intercept_
-
-                    st.write(f'#### Coefficient : {linear_model.coef_}')
-                    st.write(f'#### Intercept : {linear_model.intercept_}')
-                    st.write(f'#### Score R2 : {score}')
-
+                    score = round(linear_model.score(data[['Year']], data['Value']),4)
+                    rounded_coefficient = round(linear_model.coef_[0], 4)
+                    intercept = round(linear_model.intercept_,4)
 
                     # Préparation des prédictions
                     years_future = np.array([[2020], [2021], [2022], [2023], [2024], [2025]])
@@ -198,16 +193,35 @@ elif page == "Machine Learning 📈📉":
 
                     # Mise en forme du graphique
                     fig.update_layout(
-                        title="Régression linéaire et prédictions futures",
-                        xaxis_title="Année",
-                        yaxis_title="Valeur",
+                         title={
+                            "text": "Régression linéaire et prédictions futures",
+                            "x": 0.5,  # Centre le titre horizontalement
+                            "xanchor": "center",  # Ancre le texte du titre au centre
+                            "font": {"size": 20}
+                        },
+                        xaxis={
+                            "title": {
+                                "text": "Année",
+                                "font": {"size": 16}  # Taille du titre de l'axe X
+                            }
+                        },
+                        yaxis={
+                            "title": {
+                                "text": "Valeur",
+                                "font": {"size": 16}  # Taille du titre de l'axe Y
+                            }
+                        },
                         template="plotly_white"
                     )
 
                     # Interface utilisateur Streamlit
-                    st.title("Application de Régression Linéaire et Prédictions")
-                    st.write("Visualisation des données, de la régression linéaire et des prédictions futures.")
                     st.plotly_chart(fig, use_container_width=True)
+
+                    col1, col2, col3 = st.columns(3)
+                    col1.metric('#### Coefficient', rounded_coefficient)
+                    col2.metric('#### Intercept', intercept)
+                    col3.metric('#### Score R2', score)
+                   
 
                 if st.toggle('Voir le Clustering :'): 
 
@@ -248,7 +262,7 @@ elif page == "Machine Learning 📈📉":
                     ax.plot(cluster_range, inertia, marker='o', linestyle='-')
                     ax.set_xlabel("Nombre de clusters")
                     ax.set_ylabel("Inertie (somme des distances au carré)")
-                    ax.set_title("Méthode du coude pour le choix du nombre de clusters")
+                    ax.set_title("Méthode du coude pour le choix du nombre de clusters", fontsize=20, loc='center')
                     ax.grid(True)
 
                     # Affichez la figure avec Streamlit
@@ -282,10 +296,24 @@ elif page == "Machine Learning 📈📉":
 
                     # Mise en forme de la figure
                     fig.update_layout(
-                        title="Clustering des pays en fonction des deux premières composantes principales",
-                        xaxis_title=f"Première composante principale ({explained_variance[0]:.2%} de variance expliquée)",
-                        yaxis_title=f"Deuxième composante principale ({explained_variance[1]:.2%} de variance expliquée)",
-    
+                        title={
+                            "text": "Clustering des pays en fonction des deux premières composantes principales",
+                            "x": 0.5,  # Centre le titre horizontalement
+                            "xanchor": "center",  # Ancre le texte du titre au centre
+                            "font": {"size": 20}
+                        },
+                        xaxis={
+                            "title": {
+                                "text": f"Première composante principale ({explained_variance[0]:.2%} de variance expliquée)",
+                                "font": {"size": 16}  # Taille du titre de l'axe X
+                            }
+                        },
+                        yaxis={
+                            "title": {
+                                "text": f"Deuxième composante principale ({explained_variance[1]:.2%} de variance expliquée)",
+                                "font": {"size": 16}  # Taille du titre de l'axe Y
+                            }
+                        },
                         template="plotly_white"
                     )
 
