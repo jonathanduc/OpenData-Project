@@ -13,29 +13,51 @@ import matplotlib.pyplot as plt
 # Configuration de la page Streamlit
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
 
-# Fonction pour récupérer la liste des indicateurs depuis l'API de l'OMS
+# Fonction pour récupérer la liste des indicateurs contenant "Health" dans le nom
 def get_indicators():
     url = "https://ghoapi.azureedge.net/api/Indicator?$filter=contains(IndicatorName,'Health')"
     response = requests.get(url)
     if response.status_code == 200:
-        data = response.json()['value']
+        data = response.json().get('value', [])
         indicators = {item['IndicatorName']: item['IndicatorCode'] for item in data}
         return indicators
     else:
-        st.error("Erreur lors de la récupération des indicateurs.")
+        print("Erreur lors de la récupération des indicateurs.")
         return None
 
-# Fonction pour récupérer les données de l'API de l'OMS pour un indicateur spécifique
+# Fonction pour récupérer les données d'un indicateur spécifique
 def get_who_data(indicator_id):
     base_url = "https://ghoapi.azureedge.net/api/"
     url = f"{base_url}{indicator_id}"
     response = requests.get(url)
+    
     if response.status_code == 200:
-        data = response.json()
-        return data['value']  # Les données sont dans la clé 'value'
+        data = response.json().get('value', [])
+        
+        # Filtrer les données pour ne garder que celles où NumericValue est non nul
+        filtered_data = [entry for entry in data if entry.get('NumericValue') is not None]
+        
+        # Retourner les données filtrées si elles existent
+        return filtered_data if filtered_data else None
     else:
-        st.error("Erreur lors de la récupération des données.")
+        print("Erreur lors de la récupération des données.")
         return None
+
+# Fonction pour obtenir les indicateurs avec valeurs NumericValue non vides
+def get_indicators_with_numeric_value(limit=10):
+    indicators = get_indicators()
+    valid_indicators = {}
+    
+    if indicators:
+        with st.spinner('Vérification des indicateurs pour NumericValue...'):
+            for i, (name, code) in enumerate(indicators.items()):
+                if i >= limit:  # Limiter le nombre d'indicateurs vérifiés
+                    break
+                data = get_who_data(code)
+                if data:  # Si get_who_data retourne des données avec NumericValue non vide
+                    valid_indicators[name] = code
+    
+    return valid_indicators
 # Fonction pour convertir les données en DataFrame
 def convert_to_dataframe(data):
     records = []
@@ -82,7 +104,10 @@ elif page == "Analyse des données ⛑️📊 ":
     st.title("Analyse des données de santé publique ⛑️📊")
 
     # Récupérer les indicateurs et les afficher dans une liste déroulante
-    indicators = get_indicators()
+    nb_indicators = st.number_input("Nombre d'indicateurs à afficher", 1, 30, 5)
+     # Récupérer les indicateurs et les afficher dans une liste déroulante
+
+    indicators = get_indicators_with_numeric_value(limit=nb_indicators)
     if indicators:
         indicator_name = st.selectbox('Sélectionnez un indicateur', list(indicators.keys()))
         indicator_id = indicators[indicator_name]
@@ -137,12 +162,13 @@ elif page == "Analyse des données ⛑️📊 ":
 #Machine Learning
 elif page == "📉 Machine Learning 📈":
     st.title("📉 Machine Learning 📈")
-
+    nb_indicators = st.number_input("Nombre d'indicateurs à afficher", 1, 30, 5)
      # Récupérer les indicateurs et les afficher dans une liste déroulante
-    indicators = get_indicators()
+    indicators = get_indicators_with_numeric_value(limit=nb_indicators)
     if indicators:
         indicator_name = st.selectbox('Sélectionnez un indicateur', list(indicators.keys()))
         indicator_id = indicators[indicator_name]
+        st.write("Vous avez choisi l'indicateur :", indicator_id)
         
         st.write("Vous avez choisi l'indicateur :", indicator_name)
 
@@ -162,7 +188,7 @@ elif page == "📉 Machine Learning 📈":
                     st.dataframe(df, use_container_width=True)
 
                 df['Year'] = df['Year'].dt.year
-                
+
                 if st.toggle('Régression Linéaire'):
 
                     st.subheader(':blue[Régression Linéaire]')
