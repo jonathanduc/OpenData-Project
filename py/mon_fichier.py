@@ -6,8 +6,9 @@ import plotly.graph_objects as go
 from sklearn.linear_model import LinearRegression
 import numpy as np
 from sklearn.cluster import KMeans
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
 
 # Configuration de la page Streamlit
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
@@ -41,7 +42,7 @@ def convert_to_dataframe(data):
     for entry in data:
         record = {
                 'Country': entry.get('SpatialDim', 'N/A'),
-                'Continet': entry.get('ParentLocation', 'N/A'),
+                'Continent': entry.get('ParentLocation', 'N/A'),
                 'Year': entry.get('TimeDim', 'null'),
                 'Value': entry.get('NumericValue', 'N/A')
             }
@@ -209,38 +210,82 @@ elif page == "Machine Learning 📈📉":
                     st.plotly_chart(fig, use_container_width=True)
 
                 if st.toggle('Voir le Clustering :'): 
+
                     st.title('Clustering')
-                    # Préparation des données
-                    scaler = StandardScaler()
-                    data2 = df.groupby('Country').sum()
+
+                    data2 = df.copy()
+                    data2 = data2.groupby(['Country','Continent']).sum('Value')
                     data2 = data2.reset_index()
 
-                    # Normalisation des valeurs
-                    data_scaled = scaler.fit_transform(data2[['Value']])
+                    # Encodage des continents
+                    label_encoder = LabelEncoder()
+                    data2['Continent_encoded'] = label_encoder.fit_transform(data2['Continent'])
+
+                    # Conservez les colonnes nécessaires pour le clustering
+                    data2_for_clustering = data2[['Value', 'Continent_encoded']]
+
+                    # Normalisation des données
+                    scaler = StandardScaler()
+                    data2_scaled = scaler.fit_transform(data2_for_clustering)
+
+                    # Réduction de dimension avec PCA (1 composante principale)
+                    pca = PCA(n_components=2)
+                    data2_pca = pca.fit_transform(data2_scaled)
+
+                    explained_variance = pca.explained_variance_ratio_ # Variance expliquée par chaque composante principale
+
+
+                    # Méthode du coude
+                    inertia = []
+                    cluster_range = range(1, 11)  # Tester jusqu'à 10 clusters
+                    for k in cluster_range:
+                        kmeans = KMeans(n_clusters=k, random_state=42)
+                        kmeans.fit(data2_pca)
+                        inertia.append(kmeans.inertia_)
+
+                    # Créez la figure de la méthode du coude
+                    fig, ax = plt.subplots(figsize=(10, 6))
+                    ax.plot(cluster_range, inertia, marker='o', linestyle='-')
+                    ax.set_xlabel("Nombre de clusters")
+                    ax.set_ylabel("Inertie (somme des distances au carré)")
+                    ax.set_title("Méthode du coude pour le choix du nombre de clusters")
+                    ax.grid(True)
+
+                    # Affichez la figure avec Streamlit
+                    st.plotly_chart(fig, clear_figure=True)
+                    
+
+                    n_cluster = st.select_slider('Choisir le nombre de clusters', options=[2, 3, 4, 5, 6, 7, 8, 9, 10], value=3)
 
                     # Clustering avec KMeans
-                    kmeans = KMeans(n_clusters=3, random_state=42)
-                    kmeans.fit(data_scaled)
+                    kmeans = KMeans(n_clusters= n_cluster, random_state=42)
+                    kmeans.fit(data2_pca)
                     data2['Cluster'] = kmeans.labels_
-
+                    data2 = data2[['Country', 'Value', 'Cluster', 'Continent', 'Continent_encoded']]
+                    
+                    
                     # Création de la figure Plotly
                     fig = go.Figure()
-                    for cluster in data2['Cluster'].unique():
+                    for cluster in sorted(data2['Cluster'].unique()):
                         cluster_data = data2[data2['Cluster'] == cluster]
+                        # Utilisez les valeurs de PCA pour les axes x et y
                         fig.add_trace(go.Scatter(
-                            x=cluster_data['Country'],  # Nom des pays en axe x
-                            y=cluster_data['Value'],    # Valeurs originales en axe y
-                            mode='markers', 
-                            name=f'Cluster {cluster}',
-                            hovertext=cluster_data['Country'],  # Nom du pays pour le survol
+                            x=data2_pca[data2['Cluster'] == cluster][:, 0],  # Première composante principale
+                            y=data2_pca[data2['Cluster'] == cluster][:, 1],  # Deuxième composante principale
+                            mode='markers',
+                            name=f'Cluster {cluster +1}',
+                            marker=dict(symbol='circle', size=10),
+                            text=cluster_data['Country'],  # Nom du pays pour le survol
                             hoverinfo="text"  # Affiche uniquement le nom du pays au survol
                         ))
+                    
 
                     # Mise en forme de la figure
                     fig.update_layout(
-                        title="Clustering des données par pays",
-                        xaxis_title="Pays",
-                        yaxis_title="Valeur",
+                        title="Clustering des pays en fonction des deux premières composantes principales",
+                        xaxis_title=f"Première composante principale ({explained_variance[0]:.2%} de variance expliquée)",
+                        yaxis_title=f"Deuxième composante principale ({explained_variance[1]:.2%} de variance expliquée)",
+    
                         template="plotly_white"
                     )
 
@@ -253,13 +298,6 @@ elif page == "À propos ℹ️":
     st.title("À propos ℹ️")
     st.write("Cet outil a été créé dans le cadre du cours d'Open data et Web des données.")
     st.page_link("https://github.com/jonathanduc/OpenData-Project", label = "Lien vers le projet sur GitHub", icon= "🔗")
-    '''st.markdown(
-    """
-    <div style="text-align: right;">
-        <img src="https://github.blog/wp-content/uploads/2024/07/github-logo.png" width="200"</div>
-    """,
-    unsafe_allow_html=True
-)'''
     st.page_link("https://www.who.int/data/gho", label = "Lien vers l'API de l'OMS", icon= "🔗")
     st.page_link('https://docs.streamlit.io', label='Lien vers la documentation de Streamlit', icon='🔗')
     st.write("## À propos des développeurs")
