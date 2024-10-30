@@ -43,14 +43,14 @@ def convert_to_dataframe(data):
         record = {
                 'Country': entry.get('SpatialDim', 'N/A'),
                 'Continent': entry.get('ParentLocation', 'N/A'),
-                'Year': entry.get('TimeDim', 'null'),
+                'Year': entry.get('TimeDimensionValue', 'null'),
                 'Value': entry.get('NumericValue', 'N/A')
             }
         records.append(record)
     return pd.DataFrame(records)
     
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Machine Learning 📈📉", "À propos ℹ️"])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","📉 Machine Learning 📈", "À propos ℹ️"])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -97,7 +97,7 @@ elif page == "Analyse des données ⛑️📊 ":
                 df = convert_to_dataframe(data)
 
                 # Traitement de la colonne Year en format numérique et des valeurs 'No d'
-                df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
+                df['Year'] = pd.to_datetime(df['Year'], format= '%Y').dt.to_period('Y')
                 df['Value'] = df['Value'].replace('No d', 0).astype(float)
 
                 # Affichage des données brutes et analyses descriptives
@@ -135,8 +135,8 @@ elif page == "Analyse des données ⛑️📊 ":
             else:
                 st.write("Aucune donnée trouvée pour cet indicateur.")
 #Machine Learning
-elif page == "Machine Learning 📈📉":
-    st.title("Machine Learning 📈📉")
+elif page == "📉 Machine Learning 📈":
+    st.title("📉 Machine Learning 📈")
 
      # Récupérer les indicateurs et les afficher dans une liste déroulante
     indicators = get_indicators()
@@ -154,22 +154,27 @@ elif page == "Machine Learning 📈📉":
                 df = convert_to_dataframe(data)
 
                 # Traitement de la colonne Year en format numérique et des valeurs 'No d'
-                df['Year'] = pd.to_numeric(df['Year'], errors='coerce')
+                df['Year'] = pd.to_datetime(df['Year'], format= '%Y').dt.to_period('Y')
                 df['Value'] = df['Value'].replace('No d', 0).astype(float)
 
                 # Affichage des données brutes et analyses descriptives
                 with st.expander("Voir les données brutes"):
                     st.dataframe(df, use_container_width=True)
 
-                if st.toggle('Voir la régression linéaire'):
+                df['Year'] = df['Year'].dt.year
+                
+                if st.toggle('Régression Linéaire'):
+
+                    st.subheader(':blue[Régression Linéaire]')
 
                     # Préparation des données pour le graphique par année
                     data = df.groupby('Year').sum()
                     data = data.reset_index()
                     data = data[['Year','Value']]
                     
-
+    
                     linear_model = LinearRegression()
+
                     linear_model.fit(data[['Year']], data['Value'])
                     score = round(linear_model.score(data[['Year']], data['Value']),4)
                     rounded_coefficient = round(linear_model.coef_[0], 4)
@@ -223,9 +228,9 @@ elif page == "Machine Learning 📈📉":
                     col3.metric('#### Score R2', score)
                    
 
-                if st.toggle('Voir le Clustering :', ): 
+                if st.toggle('Clustering'): 
 
-                    st.title('Clustering')
+                    st.subheader(':blue[Clustering]')
 
                     data2 = df.copy()
                     data2 = data2.groupby(['Country','Continent']).sum('Value')
@@ -287,7 +292,7 @@ elif page == "Machine Learning 📈📉":
                             x=data2_pca[data2['Cluster'] == cluster][:, 0],  # Première composante principale
                             y=data2_pca[data2['Cluster'] == cluster][:, 1],  # Deuxième composante principale
                             mode='markers',
-                            name=f'Cluster {cluster +1}',
+                            name=f'Cluster n°{cluster +1}',
                             marker=dict(symbol='circle', size=10),
                             text=cluster_data['Country'],  # Nom du pays pour le survol
                             hoverinfo="text"  # Affiche uniquement le nom du pays au survol
@@ -318,6 +323,11 @@ elif page == "Machine Learning 📈📉":
 
                     # Affichage du graphique dans Streamlit
                     st.plotly_chart(fig, use_container_width=True)
+
+                    st.write("### Shape des clusters")
+                    col = st.columns(n_cluster)
+                    for i in range(n_cluster) : 
+                        col[i].metric(f'#### Cluster n°{i+1}', data2[data2['Cluster'] == i].shape[0])
             else : 
                 st.write("Aucune donnée trouvée pour cet indicateur.")
 #A propos 
