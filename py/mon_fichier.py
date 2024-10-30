@@ -292,7 +292,6 @@ elif page == "Machine Learning 📈📉":
                             text=cluster_data['Country'],  # Nom du pays pour le survol
                             hoverinfo="text"  # Affiche uniquement le nom du pays au survol
                         ))
-                    
 
                     # Mise en forme de la figure
                     fig.update_layout(
@@ -333,7 +332,7 @@ elif page == "À propos ℹ️":
 # Ajout des liens GitHub en utilisant Markdown
     st.markdown(
         """
-        **[🔗 Jonathan Duckes](https://github.com/jonathanduc)**  
+        **[🔗 Duckes Jonathan](https://github.com/jonathanduc)**  
         **[🔗 Girondin Audric](https://github.com/aaudric)**
         """
     )
