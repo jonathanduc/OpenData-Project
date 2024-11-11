@@ -84,8 +84,9 @@ En résumé, ce projet constitue une base solide pour l'analyse des données de 
 - **Page d'accueil:**
 - **Page de analyse:**
 - **Page Machine Learning:**
-![Regression](image/Regression.png)
-![Clustering](image/Clustering.png)
+![Regression](image/regression.png)
+
+![Clustering](image/clustering.png)
 - **Page de visualisation géographique:**
 ![carto](image/carto.png)
 
