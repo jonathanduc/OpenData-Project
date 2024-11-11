@@ -69,5 +69,24 @@ Cette carte géographique enrichit la compréhension des données en offrant une
 En résumé, ce projet constitue une base solide pour l'analyse des données de santé publique en utilisant des outils modernes de data science et de développement web. Les améliorations futures permettront d'enrichir les fonctionnalités et d'étendre la portée de l'application, rendant l'outil encore plus utile pour les chercheurs, les décideurs et le grand public.
 
 ---
+### Références
+
+- **[Streamlit](https://streamlit.io/)** : Site officiel de Streamlit, une bibliothèque open-source pour la création d'applications web interactives avec Python.
+- **[Plotly](https://plotly.com/)** : Site officiel de Plotly, une bibliothèque graphique pour la création de visualisations interactives.
+- **[GeoPandas](https://geopandas.org/)** : Site officiel de GeoPandas, une extension de Pandas pour la manipulation de données géospatiales.
+- **[OMS - API GHO](https://www.who.int/data/gho)** : Site officiel de l'OMS, offrant un accès à l'API GHO pour les données de santé publique.
+- **[Scikit-learn](https://scikit-learn.org/)** : Site officiel de scikit-learn, une bibliothèque de machine learning pour Python.
+- **[Matplotlib](https://matplotlib.org/)** : Site officiel de Matplotlib, une bibliothèque de visualisation de données pour Python.
+- **[NumPy](https://numpy.org/)** : Site officiel de NumPy, une bibliothèque pour le calcul numérique en Python.
+- **[Pandas](https://pandas.pydata.org/)** : Site officiel de Pandas, une bibliothèque pour la manipulation et l'analyse de données en Python.
+
+### Annexe : 
+- **Page d'accueil:**
+- **Page de analyse:**
+- **Page Machine Learning:**
+![Regression](image/Regression.png)
+![Clustering](image/Clustering.png)
+- **Page de visualisation géographique:**
+![carto](image/carto.png)
 
 
