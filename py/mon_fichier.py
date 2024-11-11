@@ -9,6 +9,8 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler, LabelEncoder
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
+import geopandas as gpd
+import plotly.express as px
 
 # Configuration de la page Streamlit
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
@@ -70,9 +72,20 @@ def convert_to_dataframe(data):
             }
         records.append(record)
     return pd.DataFrame(records)
-    
+
+# Fonction pour charger les coordonnées géographiques des pays
+@st.cache_data
+def load_geodata():
+    geojson_url = "https://raw.githubusercontent.com/johan/world.geo.json/master/countries.geo.json"
+    gdf = gpd.read_file(geojson_url)
+    # Extraire le code ISO alpha-3
+    gdf['ISO_A3'] = gdf['id']
+    return gdf
+
+coordinates_df = load_geodata()
+
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","📉 Machine Learning 📈", "ℹ️ À propos "])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Visualisation Géographique 🌍","📉 Machine Learning 📈", "ℹ️ À propos "])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -159,6 +172,66 @@ elif page == "Analyse des données ⛑️📊 ":
                     st.write("Aucune donnée trouvée pour cet indicateur.ERRRROR")
             else:
                 st.write("Aucune donnée trouvée pour cet indicateur.")
+
+# Visualisation Géographique
+# Visualisation Géographique
+elif page == "Visualisation Géographique 🌍":
+    st.title("Visualisation Géographique des Données de Santé 🗺️")
+    
+    # Sélectionnez l'indicateur à visualiser
+    nb_indicators_geo = st.number_input("Nombre d'indicateurs à afficher", 1, 30, 5, key='geo')
+    indicators_geo = get_indicators_with_numeric_value(limit=nb_indicators_geo)
+    
+    if indicators_geo:
+        indicator_name_geo = st.selectbox('Sélectionnez un indicateur', list(indicators_geo.keys()), key='indicator_geo')
+        indicator_id_geo = indicators_geo[indicator_name_geo]
+        
+        st.write("Vous avez choisi l'indicateur :", indicator_name_geo)
+        
+        # Bouton pour charger les données
+        if st.button("Charger les Données", key='load_geo'):
+            data_geo = get_who_data(indicator_id_geo)
+            if data_geo:
+                df_geo = convert_to_dataframe(data_geo)
+                
+                # Traitement des données
+                df_geo['Year'] = pd.to_datetime(df_geo['Year'], format= '%Y').dt.to_period('Y')
+                df_geo['Value'] = df_geo['Value'].replace('No d', 0).astype(float)
+                
+                # Afficher les données brutes
+                with st.expander("Voir les données brutes"):
+                    st.dataframe(df_geo, use_container_width=True)
+                
+
+                df_geo = df_geo.groupby('Country').sum('Value').reset_index()
+                gdf_merged = df_geo.merge(coordinates_df, left_on='Country', right_on='ISO_A3', how='left')
+                
+                # Créer la carte choroplèthe avec Plotly
+                fig = px.choropleth(
+                    gdf_merged,
+                    locations="Country",
+                    color="Value",
+                    hover_name="Country",
+                    color_continuous_scale=px.colors.sequential.Reds_r,
+                    title=f"Carte des Valeurs de {indicator_name_geo} ",
+                    width=800, 
+                    height=800
+                )
+                
+                # Afficher la carte avec Plotly dans Streamlit
+                st.plotly_chart(fig, use_container_width=True)
+                
+                # Optionnel : Afficher une carte interactive avec GeoPandas
+                if st.toggle("Afficher les données géographiques avec GeoPandas"):
+                    st.write("### Carte avec GeoPandas")
+                    ax = gdf_merged.plot(column='Value', cmap='plasma', legend=True, figsize=(15, 10))
+                    ax.set_title(f"Carte des Valeurs de {indicator_name_geo}", fontsize=20)
+                    ax.axis('off')
+                    st.pyplot(ax.figure, bbox_inches='tight')
+            else:
+                st.error("Aucune donnée trouvée pour cet indicateur.")
+    else:
+        st.warning("Aucun indicateur valide trouvé. Veuillez augmenter le nombre d'indicateurs à afficher.")
 #Machine Learning
 elif page == "📉 Machine Learning 📈":
     st.title("📉 Machine Learning 📈")
