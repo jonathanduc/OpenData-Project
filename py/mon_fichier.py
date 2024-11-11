@@ -205,14 +205,14 @@ elif page == "Visualisation Géographique 🌍":
 
                 df_geo = df_geo.groupby('Country').sum('Value').reset_index()
                 gdf_merged = df_geo.merge(coordinates_df, left_on='Country', right_on='ISO_A3', how='left')
-                
+
                 # Créer la carte choroplèthe avec Plotly
                 fig = px.choropleth(
                     gdf_merged,
                     locations="Country",
                     color="Value",
                     hover_name="Country",
-                    color_continuous_scale=px.colors.sequential.Reds_r,
+                    color_continuous_scale=px.colors.sequential.Reds,
                     title=f"Carte des Valeurs de {indicator_name_geo} ",
                     width=800, 
                     height=800
