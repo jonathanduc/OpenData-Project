@@ -174,7 +174,6 @@ elif page == "Analyse des données ⛑️📊 ":
                 st.write("Aucune donnée trouvée pour cet indicateur.")
 
 # Visualisation Géographique
-# Visualisation Géographique
 elif page == "Visualisation Géographique 🌍":
     st.title("Visualisation Géographique des Données de Santé 🗺️")
     

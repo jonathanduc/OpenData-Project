@@ -38,6 +38,16 @@ Les données proviennent de l'API GHO (Global Health Observatory) de l'OMS, offr
 - **Régression Linéaire** : Utilisée pour prédire les valeurs futures d'un indicateur en fonction du temps.
 - **Clustering (KMeans)** : Employé pour regrouper les pays en fonction de leurs performances sur les indicateurs sélectionnés, en utilisant une réduction de dimension via PCA et une normalisation des données.
 
+### Visualisation Géographique des Indicateurs de Santé
+
+La page Visualisation Géographique permet aux utilisateurs d’explorer les données de santé publique sous forme de cartes. Grâce à la bibliothèque Plotly, une carte choroplèthe interactive est générée pour afficher la répartition géographique des indicateurs de santé. Les principales fonctionnalités de cette section incluent :
+
+- **Affichage des Données Agrégées par Pays** : Les données sont groupées par pays pour chaque indicateur et affichées sur une carte pour une visualisation globale.
+- **Carte Choroplèthe avec Plotly** : Une carte interactive met en évidence les pays en fonction de la valeur de l’indicateur sélectionné. L’intensité de la couleur augmente avec la valeur de l’indicateur, facilitant la compréhension des disparités géographiques.
+- **Option pour Afficher une Carte avec GeoPandas** : En plus de la carte interactive Plotly, une option permet d’afficher les données avec GeoPandas pour une visualisation statique.
+
+Cette carte géographique enrichit la compréhension des données en offrant une dimension visuelle intuitive, facilitant ainsi l’identification de tendances géospatiales dans les indicateurs de santé.
+
 ## Difficultés Rencontrées et Idées pour Aller Plus Loin
 
 ### Difficultés Rencontrées
