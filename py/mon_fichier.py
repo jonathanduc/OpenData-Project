@@ -72,7 +72,7 @@ def convert_to_dataframe(data):
     return pd.DataFrame(records)
     
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","📉 Machine Learning 📈", "À propos ℹ️"])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","📉 Machine Learning 📈", "ℹ️ À propos "])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -94,11 +94,11 @@ if page == "Accueil 🏠":
     st.markdown(
         """
         <div style="text-align: right;">
-            <img src="/image/logo.png" width="400">
+            <img src="https://portal-cdn.scnat.ch/asset/6fa448d9-8935-5622-aabf-a38072964841/2Personalisierte_Gesundheit.png?b=25632ea7-3d85-5198-a1f0-4ad8c9dcd6ac&v=df8f0af8-c032-5691-983d-84399f3dabd8_100&s=BemJi1u43IKhuBMmsD2ab6cA6zawwM6Nr_qD3i5tf6Aj4U4VLzDFpXxq4CBe-B-5Cfj0mHLCg1S89lSrv0ZhXRFcUUkGUGXlPIQrJePIWBtf3kwOZ1sHagPcP8_VmpKU8SOWNLpIKLcQUJrG66a27HSo7itvX6f0pdatcpVpnjc&t=fc13185f-cc70-4eb1-86f2-ea80914407bc&sc=2" width="400">
         </div>
         """,
         unsafe_allow_html=True
-    )   
+    )      
 # Analyse des données
 elif page == "Analyse des données ⛑️📊 ":
     st.title("Analyse des données de santé publique ⛑️📊")
@@ -357,8 +357,8 @@ elif page == "📉 Machine Learning 📈":
             else : 
                 st.write("Aucune donnée trouvée pour cet indicateur.")
 #A propos 
-elif page == "À propos ℹ️":
-    st.title("À propos ℹ️")
+elif page == "ℹ️ À propos ":
+    st.title("ℹ️ À propos ")
     st.write("Cet outil a été créé dans le cadre du cours d'Open data et Web des données.")
     st.page_link("https://github.com/jonathanduc/OpenData-Project", label = "Lien vers le projet sur GitHub", icon= "🔗")
     st.page_link("https://www.who.int/data/gho", label = "Lien vers l'API de l'OMS", icon= "🔗")
