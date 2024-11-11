@@ -213,7 +213,7 @@ elif page == "Visualisation Géographique 🌍":
                     color="Value",
                     hover_name="Country",
                     color_continuous_scale=px.colors.sequential.Reds,
-                    title=f"Carte des Valeurs de {indicator_name_geo} ",
+                    title=f"Carte de la somme de {indicator_name_geo} par pays",
                     width=800, 
                     height=800
                 )
@@ -423,7 +423,7 @@ elif page == "📉 Machine Learning 📈":
                     # Affichage du graphique dans Streamlit
                     st.plotly_chart(fig, use_container_width=True)
 
-                    st.write("### Shape des clusters")
+                    st.write("### Nombre d'élément par clusters")
                     col = st.columns(n_cluster)
                     for i in range(n_cluster) : 
                         col[i].metric(f'#### Cluster n°{i+1}', data2[data2['Cluster'] == i].shape[0])
