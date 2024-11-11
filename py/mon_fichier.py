@@ -94,11 +94,11 @@ if page == "Accueil 🏠":
     st.markdown(
         """
         <div style="text-align: right;">
-            <img src="https://portal-cdn.scnat.ch/asset/6fa448d9-8935-5622-aabf-a38072964841/2Personalisierte_Gesundheit.png?b=25632ea7-3d85-5198-a1f0-4ad8c9dcd6ac&v=df8f0af8-c032-5691-983d-84399f3dabd8_100&s=BemJi1u43IKhuBMmsD2ab6cA6zawwM6Nr_qD3i5tf6Aj4U4VLzDFpXxq4CBe-B-5Cfj0mHLCg1S89lSrv0ZhXRFcUUkGUGXlPIQrJePIWBtf3kwOZ1sHagPcP8_VmpKU8SOWNLpIKLcQUJrG66a27HSo7itvX6f0pdatcpVpnjc&t=fc13185f-cc70-4eb1-86f2-ea80914407bc&sc=2" width="400">
+            <img src="/image/logo.png" width="400">
         </div>
         """,
         unsafe_allow_html=True
-    )      
+    )   
 # Analyse des données
 elif page == "Analyse des données ⛑️📊 ":
     st.title("Analyse des données de santé publique ⛑️📊")
@@ -163,12 +163,12 @@ elif page == "Analyse des données ⛑️📊 ":
 elif page == "📉 Machine Learning 📈":
     st.title("📉 Machine Learning 📈")
     nb_indicators = st.number_input("Nombre d'indicateurs à afficher", 1, 30, 5)
+
      # Récupérer les indicateurs et les afficher dans une liste déroulante
     indicators = get_indicators_with_numeric_value(limit=nb_indicators)
     if indicators:
         indicator_name = st.selectbox('Sélectionnez un indicateur', list(indicators.keys()))
         indicator_id = indicators[indicator_name]
-        st.write("Vous avez choisi l'indicateur :", indicator_id)
         
         st.write("Vous avez choisi l'indicateur :", indicator_name)
 
