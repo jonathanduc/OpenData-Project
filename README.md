@@ -85,11 +85,11 @@ Chaque indicateur est identifié par un code unique, avec des mesures par pays e
 
 - **[Python](https://www.python.org)** : Langage principal.
 - **[Streamlit](https://streamlit.io/)** : Création de l'interface interactive.
-- **[Plotly](https://plotly.com/)**: Visualisations interactives.
+- **[Plotly](https://plotly.com/)** : Visualisations interactives.
 - **[GeoPandas](https://geopandas.org/)** : Manipulation et affichage de données géospatiales.
-- **[Scikit-learn](https://scikit-learn.org/)**  : Modèles de machine learning.
+- **[Scikit-learn](https://scikit-learn.org/)** : Modèles de machine learning.
 - **[Pandas](https://pandas.pydata.org/)** : Manipulation de données.
-- **[NumPy](https://numpy.org/)**: Calcul numérique.
+- **[NumPy](https://numpy.org/)** : Calcul numérique.
 
 ---
 
@@ -153,13 +153,13 @@ Chaque indicateur est identifié par un code unique, avec des mesures par pays e
 
 
 ## **Annexe** : 
-- **Page d'accueil:**
-- **Page de analyse:**
-- **Page Machine Learning:**
+- **Page d'accueil :**
+- **Page de analyse :**
+- **Page Machine Learning :**
 ![Regression](image/regression.png)
 
 ![Clustering](image/clustering.png)
-- **Page de visualisation géographique:**
+- **Page de visualisation géographique :**
 ![carto](image/carto.png)
 
 
