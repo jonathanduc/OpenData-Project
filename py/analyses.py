@@ -136,24 +136,29 @@ if search_term and 'IndicatorName' in indicators_df.columns:
     if not data_df.empty:
         # Vérification des valeurs numériques
         if has_numeric_values(data_df):
-            st.subheader("Comparaison Entre Pays")
-            # Sélecteur pour l'année
-            years = sorted(data_df['TimeDim'].dropna().unique())
-            selected_year = st.selectbox("Sélectionnez une année", years, key="year_selection")
-            # Sélecteur pour le type de graphique
-            chart_type_comparison = st.radio("Type de graphique pour la comparaison entre pays", ["Ligne", "Barres"], key="comparison")
-            # Tracer le graphique
-            plot_year_comparison(data_df, selected_year, selected_indicator, chart_type_comparison)
-            
-            st.subheader("Évolution Temporelle")
-            # Sélecteur pour le pays
-            countries = data_df['SpatialDim'].unique()
-            selected_country = st.selectbox("Sélectionnez un pays", countries, key="country_selection")
-            # Sélecteur pour le type de graphique
-            chart_type_time_series = st.radio("Type de graphique pour l'évolution temporelle", ["Ligne", "Barres"], key="time_series")
-            # Tracer le graphique
-            plot_country_time_series(data_df, selected_country, selected_indicator, chart_type_time_series)
+            # Choix du type de graphique à afficher
+            graph_choice = st.radio("Choisissez le type de graphique à afficher", 
+                                     ["Comparaison Entre Pays", "Évolution Temporelle"], key="graph_choice")
 
+            if graph_choice == "Comparaison Entre Pays":
+                st.subheader("Comparaison Entre Pays")
+                # Sélecteur pour l'année
+                years = sorted(data_df['TimeDim'].dropna().unique())
+                selected_year = st.selectbox("Sélectionnez une année", years, key="year_selection")
+                # Sélecteur pour le type de graphique
+                chart_type_comparison = st.radio("Type de graphique pour la comparaison entre pays", ["Ligne", "Barres"], key="comparison")
+                # Tracer le graphique
+                plot_year_comparison(data_df, selected_year, selected_indicator, chart_type_comparison)
+
+            elif graph_choice == "Évolution Temporelle":
+                st.subheader("Évolution Temporelle")
+                # Sélecteur pour le pays
+                countries = data_df['SpatialDim'].unique()
+                selected_country = st.selectbox("Sélectionnez un pays", countries, key="country_selection")
+                # Sélecteur pour le type de graphique
+                chart_type_time_series = st.radio("Type de graphique pour l'évolution temporelle", ["Ligne", "Barres"], key="time_series")
+                # Tracer le graphique
+                plot_country_time_series(data_df, selected_country, selected_indicator, chart_type_time_series)
             
         else:
             st.write("Cet indicateur ne contient pas de valeurs numériques et ne peut pas être analysé.")
