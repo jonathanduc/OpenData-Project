@@ -28,6 +28,10 @@ def get_indicator_data(indicator_code):
         st.error("Impossible de récupérer les données de l'indicateur sélectionné.")
         return pd.DataFrame()
 
+# Fonction pour vérifier si les valeurs sont numériques
+def has_numeric_values(data_df):
+    return pd.to_numeric(data_df['NumericValue'], errors='coerce').notna().any()
+
 # Fonction pour vérifier la recherche par mot-clé
 def check_search_term_exists(indicators_df, search_term):
     return search_term and 'IndicatorName' in indicators_df.columns
@@ -92,19 +96,23 @@ if check_search_term_exists(indicators_df, search_term):
     data_df = get_indicator_data(indicator_code)
     
     if not data_df.empty:
-        # Sélection du pays et affichage de la série temporelle
-        countries = data_df['SpatialDim'].unique()
-        selected_country = st.selectbox("Sélectionnez un pays pour voir l'évolution dans le temps", countries)
-        
-        # Tracer la série temporelle pour le pays
-        plot_country_time_series(data_df, selected_country, selected_indicator)
-        
-        # Sélection de l'année et comparaison entre pays
-        years = data_df['TimeDim'].dropna().unique()
-        selected_year = st.selectbox("Sélectionnez une année pour la comparaison entre pays", years)
+        # Vérification des valeurs numériques
+        if has_numeric_values(data_df):
+            # Sélection du pays et affichage de la série temporelle
+            countries = data_df['SpatialDim'].unique()
+            selected_country = st.selectbox("Sélectionnez un pays pour voir l'évolution dans le temps", countries)
+            
+            # Tracer la série temporelle pour le pays
+            plot_country_time_series(data_df, selected_country, selected_indicator)
+            
+            # Sélection de l'année et comparaison entre pays
+            years = sorted(data_df['TimeDim'].dropna().unique())
+            selected_year = st.selectbox("Sélectionnez une année pour la comparaison entre pays", years)
 
-        # Tracer la comparaison entre pays pour l'année sélectionnée
-        plot_year_comparison(data_df, selected_year, selected_indicator)
+            # Tracer la comparaison entre pays pour l'année sélectionnée
+            plot_year_comparison(data_df, selected_year, selected_indicator)
+        else:
+            st.write("Cet indicateur ne contient pas de valeurs numériques et ne peut pas être analysé.")
     else:
         st.write("Aucune donnée disponible pour cet indicateur.")
 else:
