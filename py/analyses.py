@@ -32,44 +32,82 @@ def get_indicator_data(indicator_code):
 def has_numeric_values(data_df):
     return pd.to_numeric(data_df['NumericValue'], errors='coerce').notna().any()
 
-# Fonction pour vérifier la recherche par mot-clé
-def check_search_term_exists(indicators_df, search_term):
-    return search_term and 'IndicatorName' in indicators_df.columns
-
-# Fonction pour récupérer le code de l'indicateur sélectionné
-def get_filtered_indicator_code(filtered_indicators_df, selected_indicator):
-    return filtered_indicators_df.loc[filtered_indicators_df['IndicatorName'] == selected_indicator, 'IndicatorCode'].values[0]
-
 # Fonction pour tracer la série temporelle pour un pays sélectionné
-def plot_country_time_series(data_df, selected_country, selected_indicator):
+def plot_country_time_series(data_df, selected_country, selected_indicator, chart_type):
     country_data = filter_data_by_country(data_df, selected_country).sort_values(by='TimeDim')
     if not country_data.empty and 'TimeDim' in country_data.columns and 'NumericValue' in country_data.columns:
-        st.write(f"Évolution de {selected_indicator} pour {selected_country}")
-        fig_line = px.line(country_data, x='TimeDim', y='NumericValue', 
-                           title=f"Évolution de {selected_indicator} dans {selected_country}",
-                           labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
-        fig_line.update_traces(mode="lines+markers")
-        st.plotly_chart(fig_line)
-        return True
+        if chart_type == "Ligne":
+            fig = px.line(country_data, x='TimeDim', y='NumericValue', 
+                          title=f"Évolution de {selected_indicator} dans {selected_country}",
+                          labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
+            fig.update_traces(mode="lines+markers")
+        else:  # Bar chart
+            fig = px.bar(country_data, x='TimeDim', y='NumericValue',
+                         title=f"Évolution de {selected_indicator} dans {selected_country}",
+                         labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
+        st.plotly_chart(fig)
     else:
         st.write("Aucune donnée temporelle disponible pour ce pays.")
-        return False
 
 # Fonction pour tracer la comparaison entre pays pour une année sélectionnée
-def plot_year_comparison(data_df, selected_year, selected_indicator):
-    year_data = filter_data_by_year(data_df, selected_year).sort_values(by='NumericValue', ascending=False)
-    if not year_data.empty and 'SpatialDim' in year_data.columns and 'NumericValue' in year_data.columns:
-        st.write(f"Comparaison de {selected_indicator} entre pays pour l'année {selected_year}")
-        fig_bar = px.bar(year_data, x='SpatialDim', y='NumericValue', 
-                         title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
-                         labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
-        fig_bar.update_layout(xaxis={'categoryorder': 'total descending'})
-        st.plotly_chart(fig_bar)
-        return True
-    else:
-        st.write("Aucune donnée disponible pour cette année.")
-        return False
+def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type):
+    year_data = filter_data_by_year(data_df, selected_year)
 
+    if not year_data.empty and 'SpatialDim' in year_data.columns and 'NumericValue' in year_data.columns:
+        # Ajouter un filtre interactif pour les plages de valeurs
+        min_value = int(year_data['NumericValue'].min())
+        max_value = int(year_data['NumericValue'].max())
+        
+        st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
+        
+        # Filtre interactif via un slider
+        value_range = st.slider(
+            "Filtrer les pays par plage de valeurs", 
+            min_value=min_value, 
+            max_value=max_value, 
+            value=(min_value, max_value)
+        )
+
+        # Appliquer le filtre
+        filtered_data = year_data[(year_data['NumericValue'] >= value_range[0]) & 
+                                  (year_data['NumericValue'] <= value_range[1])]
+
+        # Ajouter une limite aux N premiers pays
+        top_n = st.number_input(
+            "Nombre maximum de pays à afficher",
+            min_value=1,
+            max_value=filtered_data.shape[0],
+            value=min(20, filtered_data.shape[0])
+        )
+        
+        # Limiter aux N premiers pays triés par NumericValue
+        filtered_data = filtered_data.nlargest(top_n, 'NumericValue')
+
+        if not filtered_data.empty:
+            if chart_type == "Ligne":
+                fig = px.line(filtered_data, x='SpatialDim', y='NumericValue', 
+                              title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
+                              labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
+                fig.update_traces(mode="lines+markers")
+            else:  # Bar chart
+                fig = px.bar(filtered_data, x='SpatialDim', y='NumericValue',
+                             title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
+                             labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
+                fig.update_layout(
+                    xaxis=dict(
+                        tickmode='linear',
+                        automargin=True
+                    ),
+                    height=600,  # Ajuste la hauteur
+                    width=1200   # Largeur suffisante pour l'ascenseur
+                )
+            
+            st.plotly_chart(fig)
+        else:
+            st.write("Aucun pays ne correspond aux critères de filtre.")
+    else:
+        st.write(f"Aucune donnée disponible pour l'année {selected_year}.")
+        
 # Filtre les données par pays
 def filter_data_by_country(data_df, country):
     return data_df[data_df['SpatialDim'] == country]
@@ -84,13 +122,13 @@ st.title("Analyse des Indicateurs de Santé")
 # Récupération des indicateurs et recherche par mot-clé
 indicators_df = get_indicators()
 search_term = st.text_input("Recherchez un indicateur par mot-clé")
-if check_search_term_exists(indicators_df, search_term):
+if search_term and 'IndicatorName' in indicators_df.columns:
     filtered_indicators_df = indicators_df[indicators_df['IndicatorName'].str.contains(search_term, case=False, na=False)]
     
     # Sélection de l'indicateur
     selected_indicator = st.selectbox("Sélectionnez un indicateur pour voir les données détaillées", 
                                        filtered_indicators_df['IndicatorName'].tolist())
-    indicator_code = get_filtered_indicator_code(filtered_indicators_df, selected_indicator)
+    indicator_code = filtered_indicators_df.loc[filtered_indicators_df['IndicatorName'] == selected_indicator, 'IndicatorCode'].values[0]
 
     # Récupération des données de l'indicateur sélectionné
     data_df = get_indicator_data(indicator_code)
@@ -98,19 +136,25 @@ if check_search_term_exists(indicators_df, search_term):
     if not data_df.empty:
         # Vérification des valeurs numériques
         if has_numeric_values(data_df):
-            # Sélection du pays et affichage de la série temporelle
-            countries = data_df['SpatialDim'].unique()
-            selected_country = st.selectbox("Sélectionnez un pays pour voir l'évolution dans le temps", countries)
-            
-            # Tracer la série temporelle pour le pays
-            plot_country_time_series(data_df, selected_country, selected_indicator)
-            
-            # Sélection de l'année et comparaison entre pays
+            st.subheader("Comparaison Entre Pays")
+            # Sélecteur pour l'année
             years = sorted(data_df['TimeDim'].dropna().unique())
-            selected_year = st.selectbox("Sélectionnez une année pour la comparaison entre pays", years)
+            selected_year = st.selectbox("Sélectionnez une année", years, key="year_selection")
+            # Sélecteur pour le type de graphique
+            chart_type_comparison = st.radio("Type de graphique pour la comparaison entre pays", ["Ligne", "Barres"], key="comparison")
+            # Tracer le graphique
+            plot_year_comparison(data_df, selected_year, selected_indicator, chart_type_comparison)
+            
+            st.subheader("Évolution Temporelle")
+            # Sélecteur pour le pays
+            countries = data_df['SpatialDim'].unique()
+            selected_country = st.selectbox("Sélectionnez un pays", countries, key="country_selection")
+            # Sélecteur pour le type de graphique
+            chart_type_time_series = st.radio("Type de graphique pour l'évolution temporelle", ["Ligne", "Barres"], key="time_series")
+            # Tracer le graphique
+            plot_country_time_series(data_df, selected_country, selected_indicator, chart_type_time_series)
 
-            # Tracer la comparaison entre pays pour l'année sélectionnée
-            plot_year_comparison(data_df, selected_year, selected_indicator)
+            
         else:
             st.write("Cet indicateur ne contient pas de valeurs numériques et ne peut pas être analysé.")
     else:
