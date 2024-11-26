@@ -11,8 +11,6 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import plotly.express as px
-import folium
-from streamlit_folium import st_folium
 
 # Configuration de la page Streamlit
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
@@ -84,10 +82,19 @@ def load_geodata():
     gdf['ISO_A3'] = gdf['id']
     return gdf
 
+
+   # Filtre les données par pays
+def filter_data_by_country(data_df, country):
+    return data_df[data_df['Country'] == country]
+
+    # Filtre les données par année
+def filter_data_by_year(data_df, year):
+    return data_df[data_df['Year'] == year]
+
 coordinates_df = load_geodata()
 
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Visualisation Géographique 🌍","📉 Machine Learning 📈", "ℹ️ À propos "])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Visualisation Géographique 🌍","📉 Machine Learning 📈", "ℹ️ À propos ",'john'])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -190,7 +197,7 @@ elif page == "Visualisation Géographique 🌍":
         st.write("Vous avez choisi l'indicateur :", indicator_name_geo)
         
         # Bouton pour charger les données
-        if st.toggle("Charger les Données", key='load_geo'):
+        if st.button("Charger les Données", key='load_geo'):
             data_geo = get_who_data(indicator_id_geo)
             if data_geo:
                 df_geo = convert_to_dataframe(data_geo)
@@ -207,7 +214,6 @@ elif page == "Visualisation Géographique 🌍":
                 df_geo = df_geo.groupby('Country').sum('Value').reset_index()
                 gdf_merged = df_geo.merge(coordinates_df, left_on='Country', right_on='ISO_A3', how='left')
 
-                st.write('### Carte interactive avec Plotly')
                 # Créer la carte choroplèthe avec Plotly
                 fig = px.choropleth(
                     gdf_merged,
@@ -224,42 +230,12 @@ elif page == "Visualisation Géographique 🌍":
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Optionnel : Afficher une carte interactive avec GeoPandas
-                # Optionnel : Afficher une carte interactive avec Folium et GeoPandas
-                if st.toggle("Afficher les données géographiques avec Folium et GeoPandas"):
-                    st.write("### Carte interactive avec Folium et GeoPandas")
-                    
-                    # Création de la carte Folium
-                    m = folium.Map(location=[0, 0], zoom_start=2)
-                    gdf_merged = gpd.GeoDataFrame(gdf_merged, geometry='geometry')
-                    # Conversion en GeoJSON
-                    geojson_data = gdf_merged.to_json()
-
-                    # Ajout du choroplèthe
-                    folium.Choropleth(
-                        geo_data=geojson_data,
-                        data=gdf_merged,
-                        columns=['Country', 'Value'],
-                        key_on='feature.properties.Country',
-                        fill_color='YlOrRd',
-                        fill_opacity=0.7,
-                        line_opacity=0.2,
-                        nan_fill_color='white',
-                        legend_name=f'Valeurs de {indicator_name_geo}',
-                        title=f"Carte de la somme de {indicator_name_geo} par pays"
-                    ).add_to(m)
-
-                    # Ajout des info-bulles
-                    folium.GeoJson(
-                        geojson_data,
-                        tooltip=folium.GeoJsonTooltip(
-                            fields=['name', 'Value'],
-                            aliases=['Pays :', 'Valeur :'],
-                            localize=True
-                        )
-                    ).add_to(m)
-
-                    # Affichage de la carte dans Streamlit
-                    st_folium(m, width=1000, height=800)
+                if st.toggle("Afficher les données géographiques avec GeoPandas"):
+                    st.write("### Carte avec GeoPandas")
+                    ax = gdf_merged.plot(column='Value', cmap='plasma', legend=True, figsize=(15, 10))
+                    ax.set_title(f"Carte des Valeurs de {indicator_name_geo}", fontsize=20)
+                    ax.axis('off')
+                    st.pyplot(ax.figure, bbox_inches='tight')
             else:
                 st.error("Aucune donnée trouvée pour cet indicateur.")
     else:
@@ -490,3 +466,138 @@ Notre travail est structuré autour de plusieurs éléments essentiels :
 Ce projet est une opportunité pour nous de mettre en pratique les compétences acquises en data science et en développement, tout en créant un outil utile et fonctionnel pour une meilleure compréhension des données.
 """
     st.write(texte)
+
+elif page == 'john': 
+
+    # Fonction pour tracer la série temporelle pour un pays sélectionné
+    def plot_country_time_series(data_df, selected_country, selected_indicator, chart_type):
+        country_data = filter_data_by_country(data_df, selected_country).sort_values(by='Year')
+        if chart_type == "Ligne":
+                fig = px.line(country_data, x='Year', y='Value', 
+                            title=f"Évolution de {selected_indicator} dans {selected_country}",
+                            labels={'Year': 'Année', 'Value': 'Valeur'})
+                fig.update_traces(mode="lines+markers")
+        else:  # Bar chart
+                fig = px.bar(country_data, x='Year', y='Value',
+                            title=f"Évolution de {selected_indicator} dans {selected_country}",
+                            labels={'Year': 'Année', 'Value': 'Valeur'})
+        st.plotly_chart(fig)
+
+
+    # Fonction pour tracer la comparaison entre pays pour une année sélectionnée
+    def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type):
+        year_data = filter_data_by_year(data_df, selected_year)
+
+        if not year_data.empty and 'Country' in year_data.columns and 'Value' in year_data.columns:
+            # Ajouter un filtre interactif pour les plages de valeurs
+            min_value = int(year_data['Value'].min())
+            max_value = int(year_data['Value'].max())
+            
+            st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
+            
+            # Filtre interactif via un slider
+            value_range = st.slider(
+                "Filtrer les pays par plage de valeurs", 
+                min_value=min_value, 
+                max_value=max_value, 
+                value=(min_value, max_value)
+            )
+
+            # Appliquer le filtre
+            filtered_data = year_data[(year_data['Value'] >= value_range[0]) & 
+                                    (year_data['Value'] <= value_range[1])]
+
+            # Ajouter une limite aux N premiers pays
+            top_n = st.number_input(
+                "Nombre maximum de pays à afficher",
+                min_value=1,
+                max_value=filtered_data.shape[0],
+                value=min(20, filtered_data.shape[0])
+            )
+            
+            # Limiter aux N premiers pays triés par NumericValue
+            filtered_data = filtered_data.nlargest(top_n, 'Value')
+
+            if not filtered_data.empty:
+                if chart_type == "Ligne":
+                    fig = px.line(filtered_data, x='Country', y='Value', 
+                                title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
+                                labels={'Country': 'Pays', 'Value': 'Valeur'})
+                    fig.update_traces(mode="lines+markers")
+                else:  # Bar chart
+                    fig = px.bar(filtered_data, x='Country', y='Value',
+                                title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
+                                labels={'Country': 'Pays', 'Value': 'Valeur'})
+                    fig.update_layout(
+                        xaxis=dict(
+                            tickmode='linear',
+                            automargin=True
+                        ),
+                        height=600,  # Ajuste la hauteur
+                        width=1200   # Largeur suffisante pour l'ascenseur
+                    )
+                
+                st.plotly_chart(fig)
+            else:
+                st.write("Aucun pays ne correspond aux critères de filtre.")
+        else:
+            st.write(f"Aucune donnée disponible pour l'année {selected_year}.")
+            
+ 
+
+
+
+    # Récupérer les indicateurs et les afficher dans une liste déroulante
+    nb_indicators = st.number_input("Nombre d'indicateurs à afficher", 1, 30, 5)
+     # Récupérer les indicateurs et les afficher dans une liste déroulante
+
+    indicators = get_indicators_with_numeric_value(limit=nb_indicators)
+
+    if indicators:
+        indicator_name = st.selectbox('Sélectionnez un indicateur', list(indicators.keys()))
+        indicator_id = indicators[indicator_name]
+        
+        st.write("Vous avez choisi l'indicateur :", indicator_name)
+
+        # Bouton pour analyser les données
+        if st.toggle("Analyser les données"):
+            data = get_who_data(indicator_id)
+            if data:
+                st.write("Données brutes :")
+                df = convert_to_dataframe(data)    
+
+                # Affichage des données brutes et analyses descriptives
+                with st.expander("Voir les données brutes"):
+                    st.dataframe(df, use_container_width=True)
+                
+                with st.expander("Voir les analyses descriptives"):
+                    st.dataframe(df.describe(), use_container_width=True)
+
+                # Choix du type de graphique à afficher
+            graph_choice = st.radio("Choisissez le type de graphique à afficher", 
+                                        ["Comparaison Entre Pays", "Évolution Temporelle"], key="graph_choice")
+
+            if graph_choice == "Comparaison Entre Pays":
+                    st.subheader("Comparaison Entre Pays")
+                    # Sélecteur pour l'année
+                    years = sorted(df['Year'].dropna().unique())
+                    selected_year = st.selectbox("Sélectionnez une année", years, key="year_selection")
+                    # Sélecteur pour le type de graphique
+                    chart_type_comparison = st.radio("Type de graphique pour la comparaison entre pays", ["Ligne", "Barres"], key="comparison")
+                    # Tracer le graphique
+                    plot_year_comparison(df, selected_year, indicator_name, chart_type_comparison)
+
+            elif graph_choice == "Évolution Temporelle":
+                    st.subheader("Évolution Temporelle")
+                    # Sélecteur pour le pays
+                    countries = df['Country'].unique()
+                    selected_country = st.selectbox("Sélectionnez un pays", countries, key="country_selection")
+                    # Sélecteur pour le type de graphique
+                    chart_type_time_series = st.radio("Type de graphique pour l'évolution temporelle", ["Ligne", "Barres"], key="time_series")
+                    # Tracer le graphique
+                    plot_country_time_series(df, selected_country, indicator_name, chart_type_time_series)
+                
+            else:
+                st.write("Cet indicateur ne contient pas de valeurs numériques et ne peut pas être analysé.")
+        else:
+            st.write("Aucune donnée disponible pour cet indicateur.")
