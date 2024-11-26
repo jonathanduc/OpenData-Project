@@ -3,8 +3,8 @@
 ## **Analyse des données de santé publique via l'API de l'OMS**
 
 ### **Développé par :**
-- [Jonathan Duckes](https://github.com/jonathanduc)
-- [Audric Girondin](https://github.com/aaudric)
+- **[Jonathan Duckes](https://github.com/jonathanduc)**
+- **[Audric Girondin](https://github.com/aaudric)**
 
 ---
 
@@ -43,7 +43,7 @@ L'objectif est de rendre les données de santé publique accessibles et compréh
 - **Carte Choroplèthe Interactive :**
   - Créée avec **Plotly** pour représenter les indicateurs par pays.
   - Permet de visualiser les disparités géographiques.
-- **Option GeoPandas :**
+- **Carte Intéractive avec GeoPandas et Folium :**
   - Carte statique avec des données agrégées par pays.
 
 ### **4. Machine Learning**
@@ -90,6 +90,7 @@ Chaque indicateur est identifié par un code unique, avec des mesures par pays e
 - **[Scikit-learn](https://scikit-learn.org/)** : Modèles de machine learning.
 - **[Pandas](https://pandas.pydata.org/)** : Manipulation de données.
 - **[NumPy](https://numpy.org/)** : Calcul numérique.
+- **[Streamlit Folium](https://folium.streamlit.app)** : Intégration de cartes interactives.
 
 ---
 
