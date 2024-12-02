@@ -471,33 +471,52 @@ elif page == 'john':
 
     # Fonction pour tracer la série temporelle pour un pays sélectionné
     def plot_country_time_series(data_df, selected_country, selected_indicator, chart_type):
-        country_data = filter_data_by_country(data_df, selected_country).sort_values(by='Year')
-        if chart_type == "Ligne":
-                fig = px.line(country_data, x='Year', y='Value', 
-                            title=f"Évolution de {selected_indicator} dans {selected_country}",
-                            labels={'Year': 'Année', 'Value': 'Valeur'})
-                fig.update_traces(mode="lines+markers")
-        else:  # Bar chart
-                fig = px.bar(country_data, x='Year', y='Value',
-                            title=f"Évolution de {selected_indicator} dans {selected_country}",
-                            labels={'Year': 'Année', 'Value': 'Valeur'})
-        st.plotly_chart(fig)
+        # Filtrer les données pour le pays sélectionné
+        country_data = filter_data_by_country(data_df, selected_country)
+
+        # Agréger les données pour gérer les doublons (par exemple, moyenne pour chaque année)
+        if 'Year' in country_data.columns and 'Value' in country_data.columns:
+            aggregated_data = (
+                country_data.groupby('Year', as_index=False)
+                            .agg({'Value': 'mean'})  # Utilisez 'mean', 'median', ou autre selon vos besoins
+            )
+            
+            # Trier par année
+            aggregated_data = aggregated_data.sort_values(by='Year')
+
+            if not aggregated_data.empty:
+                # Choisir le type de graphique
+                if chart_type == "Ligne":
+                    fig = px.line(aggregated_data, x='Year', y='Value', 
+                                title=f"Évolution de {selected_indicator} dans {selected_country}",
+                                labels={'Year': 'Année', 'Value': 'Valeur'})
+                    fig.update_traces(mode="lines+markers")
+                else:  # Graphique en barres
+                    fig = px.bar(aggregated_data, x='Year', y='Value',
+                                title=f"Évolution de {selected_indicator} dans {selected_country}",
+                                labels={'Year': 'Année', 'Value': 'Valeur'})
+
+                st.plotly_chart(fig)
+            else:
+                st.write("Aucune donnée temporelle disponible après l'agrégation pour ce pays.")
+        else:
+            st.write("Données invalides ou manquantes pour tracer l'évolution temporelle.")
 
 
     # Fonction pour tracer la comparaison entre pays pour une année sélectionnée
     def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type):
         year_data = filter_data_by_year(data_df, selected_year)
 
-        if not year_data.empty and 'SpatialDim' in year_data.columns and 'NumericValue' in year_data.columns:
+        if not year_data.empty and 'Country' in year_data.columns and 'Value' in year_data.columns:
             # Agréger les données pour gérer les doublons (par exemple, moyenne pour chaque pays)
             aggregated_data = (
-                year_data.groupby('SpatialDim', as_index=False)
-                        .agg({'NumericValue': 'mean'})  # Choisissez la méthode d'agrégation appropriée
+                year_data.groupby('Country', as_index=False)
+                        .agg({'Value': 'mean'})  # Choisissez la méthode d'agrégation appropriée
             )
 
             # Ajouter un filtre interactif pour les plages de valeurs
-            min_value = int(aggregated_data['NumericValue'].min())
-            max_value = int(aggregated_data['NumericValue'].max())
+            min_value = int(aggregated_data['Value'].min())
+            max_value = int(aggregated_data['Value'].max())
 
             if min_value == max_value:
                 st.write(f"Pour l'année {selected_year}, toutes les valeurs de l'indicateur sont identiques : {min_value}. Aucun filtrage par plage de valeurs n'est possible.")
@@ -514,8 +533,8 @@ elif page == 'john':
                 )
 
                 # Appliquer le filtre
-                filtered_data = aggregated_data[(aggregated_data['NumericValue'] >= value_range[0]) & 
-                                                (aggregated_data['NumericValue'] <= value_range[1])]
+                filtered_data = aggregated_data[(aggregated_data['Value'] >= value_range[0]) & 
+                                                (aggregated_data['Value'] <= value_range[1])]
 
             # Ajouter une limite aux N premiers pays
             top_n = st.number_input(
@@ -526,18 +545,18 @@ elif page == 'john':
             )
             
             # Limiter aux N premiers pays triés par NumericValue
-            filtered_data = filtered_data.nlargest(top_n, 'NumericValue')
+            filtered_data = filtered_data.nlargest(top_n, 'Value')
 
             if not filtered_data.empty:
                 if chart_type == "Ligne":
-                    fig = px.line(filtered_data, x='SpatialDim', y='NumericValue', 
+                    fig = px.line(filtered_data, x='Country', y='Value', 
                                 title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
-                                labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
+                                labels={'Country': 'Pays', 'Value': 'Valeur'})
                     fig.update_traces(mode="lines+markers")
                 else:  # Bar chart
-                    fig = px.bar(filtered_data, x='SpatialDim', y='NumericValue',
+                    fig = px.bar(filtered_data, x='Country', y='Value',
                                 title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
-                                labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
+                                labels={'SpatialDim': 'Pays', 'Value': 'Valeur'})
                     fig.update_layout(
                         xaxis=dict(
                             tickmode='linear',
@@ -552,6 +571,15 @@ elif page == 'john':
                 st.write("Aucun pays ne correspond aux critères de filtre.")
         else:
             st.write(f"Aucune donnée disponible pour l'année {selected_year}.")
+            
+            
+    # Filtre les données par pays
+    def filter_data_by_country(data_df, country):
+        return data_df[data_df['Country'] == country]
+
+    # Filtre les données par année
+    def filter_data_by_year(data_df, year):
+        return data_df[data_df['Year'] == year]
                 
  
 
