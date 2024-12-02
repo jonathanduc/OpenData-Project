@@ -34,43 +34,69 @@ def has_numeric_values(data_df):
 
 # Fonction pour tracer la série temporelle pour un pays sélectionné
 def plot_country_time_series(data_df, selected_country, selected_indicator, chart_type):
-    country_data = filter_data_by_country(data_df, selected_country).sort_values(by='TimeDim')
-    if not country_data.empty and 'TimeDim' in country_data.columns and 'NumericValue' in country_data.columns:
-        if chart_type == "Ligne":
-            fig = px.line(country_data, x='TimeDim', y='NumericValue', 
-                          title=f"Évolution de {selected_indicator} dans {selected_country}",
-                          labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
-            fig.update_traces(mode="lines+markers")
-        else:  # Bar chart
-            fig = px.bar(country_data, x='TimeDim', y='NumericValue',
-                         title=f"Évolution de {selected_indicator} dans {selected_country}",
-                         labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
-        st.plotly_chart(fig)
+    # Filtrer les données pour le pays sélectionné
+    country_data = filter_data_by_country(data_df, selected_country)
+
+    # Agréger les données pour gérer les doublons (par exemple, moyenne pour chaque année)
+    if 'TimeDim' in country_data.columns and 'NumericValue' in country_data.columns:
+        aggregated_data = (
+            country_data.groupby('TimeDim', as_index=False)
+                        .agg({'NumericValue': 'mean'})  # Utilisez 'mean', 'median', ou autre selon vos besoins
+        )
+        
+        # Trier par année
+        aggregated_data = aggregated_data.sort_values(by='TimeDim')
+
+        if not aggregated_data.empty:
+            # Choisir le type de graphique
+            if chart_type == "Ligne":
+                fig = px.line(aggregated_data, x='TimeDim', y='NumericValue', 
+                              title=f"Évolution de {selected_indicator} dans {selected_country}",
+                              labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
+                fig.update_traces(mode="lines+markers")
+            else:  # Graphique en barres
+                fig = px.bar(aggregated_data, x='TimeDim', y='NumericValue',
+                             title=f"Évolution de {selected_indicator} dans {selected_country}",
+                             labels={'TimeDim': 'Année', 'NumericValue': 'Valeur'})
+
+            st.plotly_chart(fig)
+        else:
+            st.write("Aucune donnée temporelle disponible après l'agrégation pour ce pays.")
     else:
-        st.write("Aucune donnée temporelle disponible pour ce pays.")
+        st.write("Données invalides ou manquantes pour tracer l'évolution temporelle.")
 
 # Fonction pour tracer la comparaison entre pays pour une année sélectionnée
 def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type):
     year_data = filter_data_by_year(data_df, selected_year)
 
     if not year_data.empty and 'SpatialDim' in year_data.columns and 'NumericValue' in year_data.columns:
-        # Ajouter un filtre interactif pour les plages de valeurs
-        min_value = int(year_data['NumericValue'].min())
-        max_value = int(year_data['NumericValue'].max())
-        
-        st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
-        
-        # Filtre interactif via un slider
-        value_range = st.slider(
-            "Filtrer les pays par plage de valeurs", 
-            min_value=min_value, 
-            max_value=max_value, 
-            value=(min_value, max_value)
+        # Agréger les données pour gérer les doublons (par exemple, moyenne pour chaque pays)
+        aggregated_data = (
+            year_data.groupby('SpatialDim', as_index=False)
+                     .agg({'NumericValue': 'mean'})  # Choisissez la méthode d'agrégation appropriée
         )
 
-        # Appliquer le filtre
-        filtered_data = year_data[(year_data['NumericValue'] >= value_range[0]) & 
-                                  (year_data['NumericValue'] <= value_range[1])]
+        # Ajouter un filtre interactif pour les plages de valeurs
+        min_value = int(aggregated_data['NumericValue'].min())
+        max_value = int(aggregated_data['NumericValue'].max())
+
+        if min_value == max_value:
+            st.write(f"Pour l'année {selected_year}, toutes les valeurs de l'indicateur sont identiques : {min_value}. Aucun filtrage par plage de valeurs n'est possible.")
+            filtered_data = aggregated_data  # Pas de filtrage
+        else:
+            st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
+            
+            # Filtre interactif via un slider
+            value_range = st.slider(
+                "Filtrer les pays par plage de valeurs", 
+                min_value=min_value, 
+                max_value=max_value, 
+                value=(min_value, max_value)
+            )
+
+            # Appliquer le filtre
+            filtered_data = aggregated_data[(aggregated_data['NumericValue'] >= value_range[0]) & 
+                                            (aggregated_data['NumericValue'] <= value_range[1])]
 
         # Ajouter une limite aux N premiers pays
         top_n = st.number_input(
@@ -106,8 +132,8 @@ def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type)
         else:
             st.write("Aucun pays ne correspond aux critères de filtre.")
     else:
-        st.write(f"Aucune donnée disponible pour l'année {selected_year}.")
-        
+        st.write(f"Aucune donnée disponible pour l'année {selected_year}.")        
+              
 # Filtre les données par pays
 def filter_data_by_country(data_df, country):
     return data_df[data_df['SpatialDim'] == country]

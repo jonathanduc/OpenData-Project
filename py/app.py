@@ -488,24 +488,34 @@ elif page == 'john':
     def plot_year_comparison(data_df, selected_year, selected_indicator, chart_type):
         year_data = filter_data_by_year(data_df, selected_year)
 
-        if not year_data.empty and 'Country' in year_data.columns and 'Value' in year_data.columns:
-            # Ajouter un filtre interactif pour les plages de valeurs
-            min_value = int(year_data['Value'].min())
-            max_value = int(year_data['Value'].max())
-            
-            st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
-            
-            # Filtre interactif via un slider
-            value_range = st.slider(
-                "Filtrer les pays par plage de valeurs", 
-                min_value=min_value, 
-                max_value=max_value, 
-                value=(min_value, max_value)
+        if not year_data.empty and 'SpatialDim' in year_data.columns and 'NumericValue' in year_data.columns:
+            # Agréger les données pour gérer les doublons (par exemple, moyenne pour chaque pays)
+            aggregated_data = (
+                year_data.groupby('SpatialDim', as_index=False)
+                        .agg({'NumericValue': 'mean'})  # Choisissez la méthode d'agrégation appropriée
             )
 
-            # Appliquer le filtre
-            filtered_data = year_data[(year_data['Value'] >= value_range[0]) & 
-                                    (year_data['Value'] <= value_range[1])]
+            # Ajouter un filtre interactif pour les plages de valeurs
+            min_value = int(aggregated_data['NumericValue'].min())
+            max_value = int(aggregated_data['NumericValue'].max())
+
+            if min_value == max_value:
+                st.write(f"Pour l'année {selected_year}, toutes les valeurs de l'indicateur sont identiques : {min_value}. Aucun filtrage par plage de valeurs n'est possible.")
+                filtered_data = aggregated_data  # Pas de filtrage
+            else:
+                st.write(f"Valeurs disponibles pour {selected_year} : entre {min_value} et {max_value}")
+                
+                # Filtre interactif via un slider
+                value_range = st.slider(
+                    "Filtrer les pays par plage de valeurs", 
+                    min_value=min_value, 
+                    max_value=max_value, 
+                    value=(min_value, max_value)
+                )
+
+                # Appliquer le filtre
+                filtered_data = aggregated_data[(aggregated_data['NumericValue'] >= value_range[0]) & 
+                                                (aggregated_data['NumericValue'] <= value_range[1])]
 
             # Ajouter une limite aux N premiers pays
             top_n = st.number_input(
@@ -516,18 +526,18 @@ elif page == 'john':
             )
             
             # Limiter aux N premiers pays triés par NumericValue
-            filtered_data = filtered_data.nlargest(top_n, 'Value')
+            filtered_data = filtered_data.nlargest(top_n, 'NumericValue')
 
             if not filtered_data.empty:
                 if chart_type == "Ligne":
-                    fig = px.line(filtered_data, x='Country', y='Value', 
+                    fig = px.line(filtered_data, x='SpatialDim', y='NumericValue', 
                                 title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
-                                labels={'Country': 'Pays', 'Value': 'Valeur'})
+                                labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
                     fig.update_traces(mode="lines+markers")
                 else:  # Bar chart
-                    fig = px.bar(filtered_data, x='Country', y='Value',
+                    fig = px.bar(filtered_data, x='SpatialDim', y='NumericValue',
                                 title=f"Comparaison de {selected_indicator} entre pays en {selected_year}",
-                                labels={'Country': 'Pays', 'Value': 'Valeur'})
+                                labels={'SpatialDim': 'Pays', 'NumericValue': 'Valeur'})
                     fig.update_layout(
                         xaxis=dict(
                             tickmode='linear',
@@ -542,7 +552,7 @@ elif page == 'john':
                 st.write("Aucun pays ne correspond aux critères de filtre.")
         else:
             st.write(f"Aucune donnée disponible pour l'année {selected_year}.")
-            
+                
  
 
 
