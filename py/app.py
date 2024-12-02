@@ -11,6 +11,8 @@ from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 import geopandas as gpd
 import plotly.express as px
+import folium
+from streamlit_folium import st_folium
 
 # Configuration de la page Streamlit
 st.set_page_config(page_title="OMS", page_icon="🏥", layout="wide", initial_sidebar_state="expanded")
@@ -94,7 +96,7 @@ def filter_data_by_year(data_df, year):
 coordinates_df = load_geodata()
 
 # Options de navigation
-page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Visualisation Géographique 🌍","📉 Machine Learning 📈", "ℹ️ À propos ",'john'])
+page = st.sidebar.selectbox("Sélectionnez une page", ["Accueil 🏠", "Analyse des données ⛑️📊 ","Visualisation Géographique 🌍","📉 Machine Learning 📈", "ℹ️ À propos "])
 
 # Page d'accueil
 if page == "Accueil 🏠":
@@ -113,16 +115,9 @@ if page == "Accueil 🏠":
         unsafe_allow_html=True
     )  
 
-    st.markdown(
-        """
-        <div style="text-align: right;">
-            <img src="https://portal-cdn.scnat.ch/asset/6fa448d9-8935-5622-aabf-a38072964841/2Personalisierte_Gesundheit.png?b=25632ea7-3d85-5198-a1f0-4ad8c9dcd6ac&v=df8f0af8-c032-5691-983d-84399f3dabd8_100&s=BemJi1u43IKhuBMmsD2ab6cA6zawwM6Nr_qD3i5tf6Aj4U4VLzDFpXxq4CBe-B-5Cfj0mHLCg1S89lSrv0ZhXRFcUUkGUGXlPIQrJePIWBtf3kwOZ1sHagPcP8_VmpKU8SOWNLpIKLcQUJrG66a27HSo7itvX6f0pdatcpVpnjc&t=fc13185f-cc70-4eb1-86f2-ea80914407bc&sc=2" width="400">
-        </div>
-        """,
-        unsafe_allow_html=True
-    )      
+     
 # Analyse des données
-elif page == "Analyse des données ⛑️📊 ":
+elif page == "john":
     st.title("Analyse des données de santé publique ⛑️📊")
 
     # Récupérer les indicateurs et les afficher dans une liste déroulante
@@ -197,7 +192,7 @@ elif page == "Visualisation Géographique 🌍":
         st.write("Vous avez choisi l'indicateur :", indicator_name_geo)
         
         # Bouton pour charger les données
-        if st.button("Charger les Données", key='load_geo'):
+        if st.toggle("Charger les Données", key='load_geo'):
             data_geo = get_who_data(indicator_id_geo)
             if data_geo:
                 df_geo = convert_to_dataframe(data_geo)
@@ -214,6 +209,7 @@ elif page == "Visualisation Géographique 🌍":
                 df_geo = df_geo.groupby('Country').sum('Value').reset_index()
                 gdf_merged = df_geo.merge(coordinates_df, left_on='Country', right_on='ISO_A3', how='left')
 
+                st.write('### Carte interactive avec Plotly')
                 # Créer la carte choroplèthe avec Plotly
                 fig = px.choropleth(
                     gdf_merged,
@@ -230,16 +226,47 @@ elif page == "Visualisation Géographique 🌍":
                 st.plotly_chart(fig, use_container_width=True)
                 
                 # Optionnel : Afficher une carte interactive avec GeoPandas
-                if st.toggle("Afficher les données géographiques avec GeoPandas"):
-                    st.write("### Carte avec GeoPandas")
-                    ax = gdf_merged.plot(column='Value', cmap='plasma', legend=True, figsize=(15, 10))
-                    ax.set_title(f"Carte des Valeurs de {indicator_name_geo}", fontsize=20)
-                    ax.axis('off')
-                    st.pyplot(ax.figure, bbox_inches='tight')
+                # Optionnel : Afficher une carte interactive avec Folium et GeoPandas
+                if st.toggle("Afficher les données géographiques avec Folium et GeoPandas"):
+                    st.write("### Carte interactive avec Folium et GeoPandas")
+                    
+                    # Création de la carte Folium
+                    m = folium.Map(location=[0, 0], zoom_start=2)
+                    gdf_merged = gpd.GeoDataFrame(gdf_merged, geometry='geometry')
+                    # Conversion en GeoJSON
+                    geojson_data = gdf_merged.to_json()
+
+                    # Ajout du choroplèthe
+                    folium.Choropleth(
+                        geo_data=geojson_data,
+                        data=gdf_merged,
+                        columns=['Country', 'Value'],
+                        key_on='feature.properties.Country',
+                        fill_color='YlOrRd',
+                        fill_opacity=0.7,
+                        line_opacity=0.2,
+                        nan_fill_color='white',
+                        legend_name=f'Valeurs de {indicator_name_geo}',
+                        title=f"Carte de la somme de {indicator_name_geo} par pays"
+                    ).add_to(m)
+
+                    # Ajout des info-bulles
+                    folium.GeoJson(
+                        geojson_data,
+                        tooltip=folium.GeoJsonTooltip(
+                            fields=['name', 'Value'],
+                            aliases=['Pays :', 'Valeur :'],
+                            localize=True
+                        )
+                    ).add_to(m)
+
+                    # Affichage de la carte dans Streamlit
+                    st_folium(m, width=1000, height=800)
             else:
                 st.error("Aucune donnée trouvée pour cet indicateur.")
     else:
         st.warning("Aucun indicateur valide trouvé. Veuillez augmenter le nombre d'indicateurs à afficher.")
+
 #Machine Learning
 elif page == "📉 Machine Learning 📈":
     st.title("📉 Machine Learning 📈")
@@ -467,7 +494,7 @@ Ce projet est une opportunité pour nous de mettre en pratique les compétences 
 """
     st.write(texte)
 
-elif page == 'john': 
+elif page == 'Analyse des données ⛑️📊 ': 
 
     # Fonction pour tracer la série temporelle pour un pays sélectionné
     def plot_country_time_series(data_df, selected_country, selected_indicator, chart_type):
